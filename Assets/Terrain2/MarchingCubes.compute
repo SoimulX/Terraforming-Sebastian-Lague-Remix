@@ -22,17 +22,27 @@ float planetSize;
 float isoLevel;
 float3 chunkCoord;
 
+float chunkSize;
+
+// TODO: Migrate to chunkSize
+// IMPORTANCE: 2/10
 float3 coordToWorld(int3 coord) {
-	return (coord / (textureSize - 1.0) - 0.5f) * planetSize;
+	// return (coord / float(textureSize - 1.0)) * chunkSize*5;
+	return (coord / float(textureSize - 1.0) - 0.5f) * chunkSize;
+	// return (coord / float(textureSize-1.0) - 0.5f) * chunkSize;
+
 }
 
+// MSG: The Vertex ID doesn't really matter as long as it is unique and consistent across coordonates.
+// As it is only used for reusing the same vertex when processing the mesh.
 int indexFromCoord(int3 coord) {
-	coord = coord - int3(chunkCoord);
+	// coord = coord - int3(chunkCoord);
 	return coord.z * numPointsPerAxis * numPointsPerAxis + coord.y * numPointsPerAxis + coord.x;
 }
 
 float sampleDensity(int3 coord) {
-	coord = max(0, min(coord, textureSize)); // [0; coord]
+	// coord = coord + int3(chunkCoord);
+	coord = max(0, min(coord, textureSize)); // [0; textureSize]
 	return DensityTexture[coord];
 }
 
@@ -88,7 +98,8 @@ void ProcessCube (int3 id : SV_DispatchThreadID)
 		return;
 	}
 
-	int3 coord = id + int3(chunkCoord);
+	// MSG: Found that you can scale the chunkCoord for spacing the chunks.
+	int3 coord = id;
 
 	// Calculate coordinates of each corner of the current cube
 	int3 cornerCoords[8];

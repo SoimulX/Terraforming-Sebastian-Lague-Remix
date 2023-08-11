@@ -742,7 +742,7 @@ MonoBehaviour:
   densityGenerator: {fileID: 1011578810}
   numChunks: 8
   numPointsPerAxis: 5
-  boundsSize: 1000
+  boundsSize: 100
   isoLevel: 0
   useFlatShading: 0
   blurMap: 1
