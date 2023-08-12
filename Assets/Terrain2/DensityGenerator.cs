@@ -14,11 +14,10 @@ namespace Terrain2
             densityCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
         }
 
-        public virtual void ComputeDensity(Vector3 offset, int textureSize, float boundsSize, float chunkSize)
+        public virtual void ComputeDensity(Vector3 offset, int textureSize, float chunkSize)
         {
             float[] offsetArray = {offset.x, offset.y, offset.z};
             densityCompute.SetInt("textureSize", textureSize);
-            densityCompute.SetFloat("planetSize", boundsSize);
             densityCompute.SetFloats("offset", offsetArray);
             densityCompute.SetFloat("chunkSize", chunkSize);
 

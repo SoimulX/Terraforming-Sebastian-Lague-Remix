@@ -3,253 +3,97 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Linq;
+
 
 namespace Terrain2
 {
+	// TODO: Fix the gap in the mesh generation when using blur.
+
 	public class GenTest : MonoBehaviour
 	{
 		#region INSPECTOR VARIABLES
 
 		public DensityGenerator densityGenerator;
 
-		[Header("Init Settings")]
-		public int numChunks = 5;
+		[SerializeField] Transform viewer;
+		[SerializeField][Range(0, 200)] ushort renderDistance;
+		[SerializeField][Range(1, 100)] float distanceThresholdForChunkUpdate;
 
-		public int numPointsPerAxis = 10;
+		[SerializeField] Transform chunkContainer;
+
+		[Header("Init Settings")]
+
 		public float chunkSize = 10;
-		public float isoLevel = 0f;
 		public bool useFlatShading;
 
-		public bool blurMap;
-		public int blurRadius = 3;
-
 		[Header("References")]
-		public ComputeShader meshCompute;
 
-		public ComputeShader blurCompute;
-		// public ComputeShader editCompute;
 		public Material material;
 
 		#endregion
 
-		private float boundsSize;
-
 		#region PRIVATE VARIABLES
 
-		// Private
-		ComputeBuffer triangleBuffer;
-		ComputeBuffer triCountBuffer;
-		Chunk[] chunks;
+		ChunkMeshGenerator chunkMeshGenerator;
 
-		VertexData[] vertexDataArray;
+		Dictionary<Vector3Int, Chunk> existingChunks = new Dictionary<Vector3Int, Chunk>();
 
-		int totalVerts;
-
-		// Stopwatches
-		System.Diagnostics.Stopwatch timer_fetchVertexData;
-		System.Diagnostics.Stopwatch timer_processVertexData;
-		RenderTexture originalMap;
-
-		// Mesh processing
-		Dictionary<int2, int> vertexIndexMap = new Dictionary<int2, int>();
-		List<Vector3> processedVertices = new List<Vector3>();
-		List<Vector3> processedNormals = new List<Vector3>();
-		List<int> processedTriangles = new List<int>();
+		List<Vector3Int> lastVisibleChunksCoords = new List<Vector3Int>();
+		Vector3 lastPositionForChunkUpdate;
 
 		#endregion
 
 		void Start()
 		{
-			boundsSize = numChunks * chunkSize;
-
-			CreateBuffers(); // Good
-
-			CreateChunks(); // Bad
-
-			var sw = System.Diagnostics.Stopwatch.StartNew();
-			GenerateAllChunks(boundsSize, ref blurCompute, blurMap, blurRadius); // Bad
-			Debug.Log("Generation Time: " + sw.ElapsedMilliseconds + " ms");
+			chunkMeshGenerator = gameObject.GetComponent<ChunkMeshGenerator>();
+			chunkMeshGenerator.chunkSize = chunkSize;
+			UpdateChunks();
+			lastPositionForChunkUpdate = viewer.position;
 
 			// ComputeHelper.CreateRenderTexture3D(ref originalMap, processedDensityTexture);
 			// ComputeHelper.CopyRenderTexture3D(processedDensityTexture, originalMap);
-
 		}
 
-		// TODO: Migtate densityTextures to chunks.
-		void InitTextures(ref RenderTexture rawDensityTexture, ref RenderTexture processedDensityTexture, bool blurMap)
+		void UpdateChunks()
 		{
-
-			// Explanation of texture size:
-			// Each pixel maps to one point.
-			// Each chunk has "numPointsPerAxis" points along each axis
-			// The last points of each chunk overlap in space with the first points of the next chunk
-			// Therefore we need one fewer pixel than points for each added chunk
-			int size = numPointsPerAxis;
-			Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
-			Create3DTexture(ref processedDensityTexture, size, "Processed Density Texture");
-
-			if (!blurMap)
+			List<Vector3Int> visibleChunksCoords = GetVisibleChunksCoords();
+			foreach (var coord in visibleChunksCoords)
 			{
-				processedDensityTexture = rawDensityTexture;
-			}
-		}
+				Debug.Log(coord);
 
-		void GenerateAllChunks(float boundsSize, ref ComputeShader blurCompute, bool blurMap, int blurRadius)
-		{
-			// Create timers:
-			timer_fetchVertexData = new System.Diagnostics.Stopwatch();
-			timer_processVertexData = new System.Diagnostics.Stopwatch();
+				// If already in view, continue.
+				if (lastVisibleChunksCoords.Contains(coord)) continue;
 
-			totalVerts = 0;
-
-			foreach (var chunk in chunks)
-			{
-				Vector3 offset = (Vector3)chunk.id * chunkSize;
-				Debug.Log("ID " + chunk.id);
-				InitTextures(ref chunk.rawDensityTexture, ref chunk.processedDensityTexture, blurMap);  // Good
-				ComputeDensity(offset, ref densityGenerator, ref chunk.rawDensityTexture, ref chunk.processedDensityTexture, boundsSize, ref blurCompute, blurMap, blurRadius);
-				GenerateMesh(ref chunk.mesh, chunk.id, ref chunk.rawDensityTexture, ref chunk.processedDensityTexture);
-			}
-
-			Debug.Log("Total verts " + totalVerts);
-
-			// Print timers:
-			Debug.Log("Fetch vertex data: " + timer_fetchVertexData.ElapsedMilliseconds + " ms");
-			Debug.Log("Process vertex data: " + timer_processVertexData.ElapsedMilliseconds + " ms");
-			Debug.Log("Sum: " + (timer_fetchVertexData.ElapsedMilliseconds + timer_processVertexData.ElapsedMilliseconds));
-
-
-		}
-
-		// FLEXIBLE
-		void ComputeDensity(Vector3 offset, ref DensityGenerator densityGenerator, ref RenderTexture rawDensityTexture, ref RenderTexture processedDensityTexture, float boundsSize, ref ComputeShader blurCompute, bool blurMap, int blurRadius)
-		{
-			densityGenerator.InitTexture(ref rawDensityTexture);
-
-			// Get points (each point is a vector4: xyz = position, w = density)
-			int textureSize = rawDensityTexture.width;
-
-			// TODO: Migrate to chunkSize
-			densityGenerator.ComputeDensity(offset, textureSize, boundsSize, chunkSize);
-			ProcessDensityMap(ref blurCompute, ref rawDensityTexture, ref processedDensityTexture, blurMap, blurRadius);
-		}
-
-		// FLEXIBLE
-		void ProcessDensityMap(ref ComputeShader blurCompute, ref RenderTexture rawDensityTexture, ref RenderTexture processedDensityTexture, bool blurMap, int blurRadius)
-		{
-			if (blurMap)
-			{
-				blurCompute.SetTexture(0, "Source", rawDensityTexture);
-				blurCompute.SetTexture(0, "Result", processedDensityTexture);
-
-				int size = rawDensityTexture.width;
-				blurCompute.SetInts("brushCentre", 0, 0, 0);
-				blurCompute.SetInt("blurRadius", blurRadius);
-				blurCompute.SetInt("textureSize", rawDensityTexture.width);
-				ComputeHelper.Dispatch(blurCompute, size, size, size);
-			}
-		}
-
-		void InitialiseMeshCompute(int marchKernel, Vector3 coord, ref RenderTexture rawDensityTexture, ref RenderTexture processedDensityTexture)
-		{
-			meshCompute.SetBuffer(marchKernel, "triangles", triangleBuffer);
-			meshCompute.SetTexture(0, "DensityTexture", blurCompute ? processedDensityTexture : rawDensityTexture);
-			meshCompute.SetInt("textureSize", processedDensityTexture.width);
-
-			meshCompute.SetInt("numPointsPerAxis", numPointsPerAxis);
-
-			// TODO: Migrate to chunkSize
-			meshCompute.SetFloat("planetSize", boundsSize);
-			meshCompute.SetFloat("isoLevel", isoLevel);
-
-			int lowerRange = Mathf.CeilToInt(-numChunks / 2);
-
-			Vector3 chunkCoord = coord * (numPointsPerAxis - 1) + Vector3.one * lowerRange;
-			meshCompute.SetVector("chunkCoord", chunkCoord);
-			meshCompute.SetFloat("chunkSize", chunkSize);
-		}
-
-		public void GenerateMesh(ref Mesh mesh, Vector3 coord, ref RenderTexture rawDensityTexture, ref RenderTexture processedDensityTexture)
-		{
-			// Create timers:
-			timer_fetchVertexData = new System.Diagnostics.Stopwatch();
-			timer_processVertexData = new System.Diagnostics.Stopwatch();
-
-			// Marching cubes
-			int numVoxelsPerAxis = numPointsPerAxis - 1;
-			int marchKernel = 0;
-
-			// Debug.Log(triangleBuffer + "Lasagna sus");
-
-			triangleBuffer.SetCounterValue(0);
-
-			InitialiseMeshCompute(marchKernel, coord, ref rawDensityTexture, ref processedDensityTexture);
-			ComputeHelper.Dispatch(meshCompute, numVoxelsPerAxis, numVoxelsPerAxis, numVoxelsPerAxis, marchKernel);
-
-			// Create mesh
-			int[] vertexCountData = new int[1];
-			triCountBuffer.SetData(vertexCountData);
-			ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-
-			timer_fetchVertexData.Start();
-			triCountBuffer.GetData(vertexCountData);
-
-			int numVertices = vertexCountData[0] * 3;
-
-			// Debug.Log(triangleBuffer + "THERE2");
-
-			// Debug.Log($"THERE, {numVertices}, {vertexCountData[0]}, {vertexCountData}");
-			// Fetch vertex data from GPU
-			triangleBuffer.GetData(vertexDataArray, 0, 0, numVertices);
-
-			timer_fetchVertexData.Stop();
-
-			// Process vertex data
-			timer_processVertexData.Start();
-
-			// Mesh processing
-			vertexIndexMap.Clear();
-			processedVertices.Clear();
-			processedNormals.Clear();
-			processedTriangles.Clear();
-
-			// ? To be explained if understood, please.
-			int triangleIndex = 0;
-			// Merging and processing verticies.
-			for (int i = 0; i < numVertices; i++)
-			{
-				VertexData data = vertexDataArray[i];
-
-				// Tries to use an already existing vertex.
-				if (vertexIndexMap.TryGetValue(data.id, out int sharedVertexIndex))
+				// If not generated, generate.
+				if (!existingChunks.ContainsKey(coord))
 				{
-					processedTriangles.Add(sharedVertexIndex);
+					existingChunks.Add(coord, GenerateChunk(coord));
 				}
-				// Adds a new vertex and processes it.
+				// If hidden, show.
 				else
 				{
-					vertexIndexMap.Add(data.id, triangleIndex);
-
-					processedVertices.Add(data.position);
-					processedNormals.Add(data.normal);
-					processedTriangles.Add(triangleIndex);
-
-					triangleIndex++;
-					// Debug.Log("next triangle!");
+					existingChunks[coord].Show();
 				}
 			}
 
-			mesh.Clear();
-			mesh.SetVertices(processedVertices);
-			mesh.SetTriangles(processedTriangles, 0, true);
-			mesh.SetNormals(processedNormals);
+			// Hide the chunks that went out of view.
+			var notVisibleChunksCoords = lastVisibleChunksCoords.Except(visibleChunksCoords);
+			foreach (var coord in notVisibleChunksCoords)
+			{
+				existingChunks[coord].Hide();
+			}
 
-			mesh.name = "mesh";
-			timer_processVertexData.Stop();
+			// Update the visibleChunksCoords.
+			lastVisibleChunksCoords = visibleChunksCoords;
 		}
 
 		void Update()
 		{
+			if ((viewer.position - lastPositionForChunkUpdate).sqrMagnitude >= distanceThresholdForChunkUpdate * distanceThresholdForChunkUpdate)
+			{
+				UpdateChunks();
+			}
 
 			// TODO: move somewhere more sensible
 			// material.SetTexture("DensityTex", originalMap);
@@ -265,69 +109,11 @@ namespace Terrain2
 			*/
 		}
 
-		void CreateBuffers()
-		{
-			int numPoints = numPointsPerAxis * numPointsPerAxis * numPointsPerAxis;
-			int numVoxelsPerAxis = numPointsPerAxis - 1;
-			int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
-			int maxTriangleCount = numVoxels * 5;
-			int maxVertexCount = maxTriangleCount * 3;
-
-			triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-			triangleBuffer = new ComputeBuffer(maxVertexCount, ComputeHelper.GetStride<VertexData>(), ComputeBufferType.Append);
-			vertexDataArray = new VertexData[maxVertexCount];
-		}
-
-		void ReleaseBuffers()
-		{
-			ComputeHelper.Release(triangleBuffer, triCountBuffer);
-		}
-
 		void OnDestroy()
 		{
-			ReleaseBuffers();
-			foreach (Chunk chunk in chunks)
+			foreach (Chunk chunk in existingChunks.Values)
 			{
 				chunk.Release();
-			}
-		}
-
-		// TODO: Convert from [0; numChunks) to [-numChunks/2; +numChunks/2]
-		// WORKING ON
-		void CreateChunks()
-		{
-			chunks = new Chunk[numChunks * numChunks * numChunks];
-			int i = 0;
-
-			int lowerRange = Mathf.CeilToInt(-numChunks / 2);
-			int upperRange = Mathf.FloorToInt(+numChunks / 2) + 1; // CeilToInt doesn't work.
-
-			Debug.Log($"LowerRange {lowerRange}, UpperRange {upperRange}");
-			// int lowerRange = -2;
-			// int upperRange = 3;
-
-			for (int y = lowerRange; y < upperRange; y++)
-			{
-				for (int x = lowerRange; x < upperRange; x++)
-				{
-					for (int z = lowerRange; z < upperRange; z++)
-					{
-						Vector3Int coord = new Vector3Int(x, y, z);
-						float posX = (-(numChunks - 1f) / 2 + x) * chunkSize;
-						float posY = (-(numChunks - 1f) / 2 + y) * chunkSize;
-						float posZ = (-(numChunks - 1f) / 2 + z) * chunkSize;
-						Vector3 centre = new Vector3(posX, posY, posZ);
-
-						GameObject meshHolder = new GameObject($"Chunk ({x}, {y}, {z})");
-						meshHolder.transform.parent = transform;
-						meshHolder.layer = gameObject.layer;
-
-						Chunk chunk = new Chunk(coord, centre, chunkSize, numPointsPerAxis, meshHolder);
-						chunk.SetMaterial(material);
-						chunks[i] = chunk;
-						i++;
-					}
-				}
 			}
 		}
 
@@ -387,31 +173,80 @@ namespace Terrain2
 		}
 		*/
 
-		void Create3DTexture(ref RenderTexture texture, int size, string name)
+		#region CHUNK MANAGEMENT
+
+		Chunk GenerateChunk(Vector3Int coord)
 		{
-			//
-			var format = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat;
-			if (texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format)
-			{
-				//Debug.Log ("Create tex: update noise: " + updateNoise);
-				if (texture != null)
-				{
-					texture.Release();
-				}
-				const int numBitsInDepthBuffer = 0;
-				texture = new RenderTexture(size, size, numBitsInDepthBuffer);
-				texture.graphicsFormat = format;
-				texture.volumeDepth = size;
-				texture.enableRandomWrite = true;
-				texture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-
-
-				texture.Create();
-			}
-			texture.wrapMode = TextureWrapMode.Repeat;
-			texture.filterMode = FilterMode.Bilinear;
-			texture.name = name;
+			return new Chunk(coord, chunkSize, chunkMeshGenerator, material, chunkContainer);
 		}
 
+		List<Vector3Int> GetVisibleChunksCoords()
+		{
+			List<Vector3Int> visibleChunksCoordsInRadius = GetChunkIDsInRadius(viewer.position, renderDistance);
+			List<Vector3Int> visibleChunksCoords = new();
+
+			foreach (var coord in visibleChunksCoordsInRadius)
+			{
+				// Copied from Sebastian Lague's "Marching Cubes" file "MeshGenerator.cs" and edited.
+				Bounds bounds = new Bounds(ChunkPosition(coord), Vector3.one * chunkSize);
+				if (IsVisibleFrom(bounds, Camera.main))
+				{
+					visibleChunksCoords.Add(coord);
+				}
+				// 
+			}
+			return visibleChunksCoords;
+		}
+
+		// Copied from old project
+		List<Vector3Int> GetChunkIDsInRadius(Vector3 position, float radius)
+		{
+			List<Vector3Int> chunkIDs = new List<Vector3Int>();
+
+			// The position on a chunkSize unit of measurement.
+			Vector3 chunkRelativePosition = position / chunkSize;
+
+			// The position of the current chunk on a chunkSize unit of measurement.
+			Vector3Int currentChunkPosition = Vector3Int.FloorToInt(chunkRelativePosition);
+
+			// The integer-approximation of the radius on a chunkSize scale.
+			int chunkRadius = Mathf.CeilToInt(radius / chunkSize);
+
+			for (int x = currentChunkPosition.x - chunkRadius; x <= currentChunkPosition.x + chunkRadius; x++)
+			{
+				for (int y = currentChunkPosition.y - chunkRadius; y <= currentChunkPosition.y + chunkRadius; y++)
+				{
+					for (int z = currentChunkPosition.z - chunkRadius; z <= currentChunkPosition.z + chunkRadius; z++)
+					{
+						Vector3Int chunkID = new Vector3Int(x, y, z);
+
+						// Foreach chunkID in the exterior cube of the sphere:
+
+						// If the distance to the chunk is smaller than `radius`
+						if (((Vector3)chunkID * chunkSize - position).sqrMagnitude < radius * radius)
+						{
+							// Foreach chunkID in the sphere at position: position, radius:radius: 
+							chunkIDs.Add(chunkID);
+						}
+					}
+				}
+			}
+
+			return chunkIDs;
+		}
+
+		Vector3 ChunkPosition(Vector3Int coord)
+		{
+			return (Vector3)coord * chunkSize;
+		}
+
+		// Copied from Sebastian Lague's "Marching Cubes" file "MeshGenerator.cs", not edited.
+		bool IsVisibleFrom(Bounds bounds, Camera camera)
+		{
+			Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+			return GeometryUtility.TestPlanesAABB(planes, bounds);
+		}
+
+		#endregion
 	}
 }

@@ -24,7 +24,7 @@ namespace Terrain2
         public float hardFloor;
         public float hardFloorWeight;
 
-        public override void ComputeDensity(Vector3 offset, int textureSize, float boundsSize, float chunkSize)
+        public override void ComputeDensity(Vector3 offset, int textureSize, float chunkSize)
         {
             // Noise parameters
 
@@ -43,7 +43,7 @@ namespace Terrain2
             densityCompute.SetFloat("hardFloor", hardFloor);
             densityCompute.SetFloat("hardFloorWeight", hardFloorWeight);
 
-            base.ComputeDensity(offset, textureSize, boundsSize, chunkSize);
+            base.ComputeDensity(offset, textureSize, chunkSize);
         }
     }
 }
