@@ -18,19 +18,16 @@ RWTexture3D<float> DensityTexture;
 int textureSize;
 
 int numPointsPerAxis;
-float planetSize;
 float isoLevel;
+
+// OPTIMIZATION: Can be removed.
 float3 chunkCoord;
 
 float chunkSize;
 
-// TODO: Migrate to chunkSize
-// IMPORTANCE: 2/10
-float3 coordToWorld(int3 coord) {
-	// return (coord / float(textureSize - 1.0)) * chunkSize*5;
+float3 coordToWorld(int3 coord)
+{
 	return (coord / float(textureSize - 1.0) - 0.5f) * chunkSize;
-	// return (coord / float(textureSize-1.0) - 0.5f) * chunkSize;
-
 }
 
 // MSG: The Vertex ID doesn't really matter as long as it is unique and consistent across coordonates.
@@ -41,7 +38,6 @@ int indexFromCoord(int3 coord) {
 }
 
 float sampleDensity(int3 coord) {
-	// coord = coord + int3(chunkCoord);
 	coord = max(0, min(coord, textureSize)); // [0; textureSize]
 	return DensityTexture[coord];
 }
