@@ -8,15 +8,15 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Terrain
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: a8334df6664194c45a11d6133d061be6,
+    type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
+  stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
@@ -45,11 +45,27 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Grass_Normal_Texture:
+        m_Texture: {fileID: 2800000, guid: 92f0dfd6a15508c43beb75d2a1eb5a9d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Grass_Roughness_Texture:
+        m_Texture: {fileID: 2800000, guid: d28d5f145cb2d3f47b148c2cbf183ae3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Grass_Texture:
+        m_Texture: {fileID: 2800000, guid: 7e8adbffa392116489fd76101bd8ddbb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -63,6 +79,30 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Steep_Normal_Texture:
+        m_Texture: {fileID: 2800000, guid: 6d96bf27821b62149a969805be3e4b25, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Steep_Roughness_Texture:
+        m_Texture: {fileID: 2800000, guid: 3b21b0589db7e9b44b13ebaf041d56b1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Steep_Texture:
+        m_Texture: {fileID: 2800000, guid: 7d66fe5e4ef62c24fb66c1b923befec0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2D_Array:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Triplanar_06c1ea2c76084259add11dcbf94d9cad_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 7d66fe5e4ef62c24fb66c1b923befec0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Triplanar_b7759022e8014a9ba614c567db05510b_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 7e8adbffa392116489fd76101bd8ddbb, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -93,25 +133,37 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _Grass_Tiling: 0.1
     - _Metallic: 0
+    - _Normal_Strength: 0.3
     - _OcclusionStrength: 1
     - _Parallax: 0.005
+    - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _Steep_Tiling: 0.1
+    - _Steepness: 0.38
     - _Surface: 0
+    - _Test: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.3773585, g: 0.25813133, b: 0.25813133, a: 1}
-    - _Color: {r: 0.37735847, g: 0.2581313, b: 0.2581313, a: 1}
+    - _BaseColor: {r: 0.5660378, g: 0.5660378, b: 0.5660378, a: 1}
+    - _Color: {r: 0.5660378, g: 0.5660378, b: 0.5660378, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GrassDark: {r: 0.4528302, g: 0.43992877, b: 0.17305416, a: 1}
+    - _GrassLight: {r: 0.764151, g: 0.7407862, b: 0.45062625, a: 1}
+    - _RockDark: {r: 0.6037736, g: 0.5066099, b: 0.196563, a: 1}
+    - _RockInnerDeep: {r: 0.5934173, g: 0.6226415, b: 0.26144534, a: 1}
+    - _RockInnerShallow: {r: 0.7976086, g: 0.8962264, b: 0.342503, a: 1}
+    - _RockLight: {r: 0.7830189, g: 0.71329427, b: 0.2918525, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
---- !u!114 &2343483725271139610
+--- !u!114 &8487354387240729668
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

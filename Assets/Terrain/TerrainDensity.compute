@@ -1,9 +1,9 @@
 ﻿#pragma kernel CSMain
-#include "Noise.compute"
+#include "/Includes/Noise.compute"
 
-RWTexture3D<float> DensityTexture;
+// Unique
+RWTexture3D<float> DensityTexture; 
 int textureSize;
-float chunkSize;
 
 float noiseScale;
 float noiseHeightMultiplier;
@@ -20,13 +20,20 @@ float weightMultiplier;
 float hardFloor;
 float hardFloorWeight;
 
-float fbm(int octaves, float lacunarity, float persistence, float scale, float3 pos) {
+// Unique
+float3 offset; 
+
+float chunkSize;
+
+float fbm(int octaves, float lacunarity, float persistence, float scale, float3 pos)
+{
 	float noise = 0;
 	float frequency = scale / 100;
 	float amplitude = 1;
     float weight = 1;
 
-	for (int i = 0; i < octaves; i ++) {
+	for (int i = 0; i < octaves; i ++)
+	{
 		float n = 1-abs(snoise(pos * frequency));
 		n *= n;
 
@@ -42,15 +49,17 @@ float fbm(int octaves, float lacunarity, float persistence, float scale, float3 
 	return noise;
 }
 
-float calculateDensity(int3 cell) {
-	float3 worldPos = (cell / float(textureSize-1.0) - 0.5f) * chunkSize;
+float calculateDensity(int3 cell)
+{
+	float3 worldPos = (cell / float(textureSize - 1.0) - 0.5f) * chunkSize + offset;
 
 	// Noise
 	float noise = fbm(octaves, lacunarity, persistence, noiseScale, worldPos) * noiseHeightMultiplier;
 
 	float density = -(worldPos.y + floorOffset) * floorFactor + noise;
 
-	if (worldPos.y < hardFloor) {
+	if (worldPos.y < hardFloor)
+	{
         density += hardFloorWeight;
     }
 
@@ -60,22 +69,12 @@ float calculateDensity(int3 cell) {
 [numthreads(8,8,8)]
 void CSMain (int3 id : SV_DispatchThreadID)
 {
-	if (id.x >= textureSize || id.y >= textureSize || id.z >= textureSize) {
+	if (id.x >= textureSize || id.y >= textureSize || id.z >= textureSize)
+	{
 		return;
 	}
 
-	float density = 0;
-
-	const int b = 1;
-	if (id.x >= textureSize-b || id.y >= textureSize-b || id.z >= textureSize-b) {
-		density = 1;
-	}
-	else if (id.x <= b || id.y <= b || id.z <=b) {
-		density = 1;
-	}
-	else {
-		density = calculateDensity(id);
-	}
+	float density = calculateDensity(id);
 
 	DensityTexture[id] = density;
 }
