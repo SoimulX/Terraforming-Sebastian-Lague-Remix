@@ -46,15 +46,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Grass_Normal_Texture:
-        m_Texture: {fileID: 2800000, guid: 92f0dfd6a15508c43beb75d2a1eb5a9d, type: 3}
+        m_Texture: {fileID: 2800000, guid: 7cf2d6f9fc61c5f41acd19a204f702b0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Grass_Roughness_Texture:
-        m_Texture: {fileID: 2800000, guid: d28d5f145cb2d3f47b148c2cbf183ae3, type: 3}
+        m_Texture: {fileID: 2800000, guid: 39aa128693c7d534d8884a3547d3b3c0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Grass_Texture:
-        m_Texture: {fileID: 2800000, guid: 7e8adbffa392116489fd76101bd8ddbb, type: 3}
+        m_Texture: {fileID: 2800000, guid: c2b46207cbe87df4592c48138e6fc1e6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -90,7 +90,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Steep_Texture:
-        m_Texture: {fileID: 2800000, guid: 7d66fe5e4ef62c24fb66c1b923befec0, type: 3}
+        m_Texture: {fileID: 2800000, guid: c2b46207cbe87df4592c48138e6fc1e6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture2D_Array:
@@ -130,6 +130,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EnvironmentReflections: 1
+    - _Flatness: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
@@ -146,7 +147,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _Steep_Tiling: 0.1
-    - _Steepness: 0.38
+    - _Steepness: 0.6
     - _Surface: 0
     - _Test: 0
     - _WorkflowMode: 1

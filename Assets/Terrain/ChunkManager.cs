@@ -15,7 +15,7 @@ namespace Terrain
 		#region INSPECTOR VARIABLES
 
 		[SerializeField] Transform viewer;
-		[SerializeField][Range(0, 200)] ushort renderDistance;
+		[SerializeField][Range(10, 2000)] ushort renderDistance;
 		[SerializeField][Range(1, 100)] float distanceThresholdForChunkUpdate;
 
 		[SerializeField] Transform chunkContainer;

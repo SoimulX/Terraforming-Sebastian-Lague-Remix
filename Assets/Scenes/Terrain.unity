@@ -14,8 +14,8 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_Fog: 1
+  m_FogColor: {r: 0.4117647, g: 0.3882353, b: 0.37254903, a: 1}
   m_FogMode: 3
   m_FogDensity: 0.01
   m_LinearFogStart: 0
@@ -159,8 +159,8 @@ MonoBehaviour:
   octaves: 8
   lacunarity: 1.8
   persistence: 0.5
-  noiseScale: 0.8
-  noiseHeightMultiplier: 15
+  noiseScale: 0.4
+  noiseHeightMultiplier: 25
   floorOffset: 0
   floorFactor: -1
   weightMultiplier: 5
@@ -179,12 +179,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   viewer: {fileID: 1726465162}
-  renderDistance: 200
+  renderDistance: 300
   distanceThresholdForChunkUpdate: 1
   chunkContainer: {fileID: 1087129454}
-  chunkSize: 32
+  chunkSize: 50
   useFlatShading: 0
-  material: {fileID: 2100000, guid: 2d3cc9fad8f61ba4384861d587b892d0, type: 2}
+  material: {fileID: 2100000, guid: d77cb8c140b1e004ea21f1f9ad964dd1, type: 2}
 --- !u!4 &1087129454
 Transform:
   m_ObjectHideFlags: 0
@@ -213,7 +213,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   densityGenerator: {fileID: 1087129452}
-  numPointsPerAxis: 20
+  numPointsPerAxis: 15
   isoLevel: 0
   blurMap: 0
   blurRadius: 3

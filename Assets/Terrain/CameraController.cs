@@ -9,9 +9,26 @@ public class CameraController : MonoBehaviour
     public float mouseSensitivity = 2.0f;
 
     private float verticalRotation = 0.0f;
+    private bool hasFocus = false;
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        this.hasFocus = hasFocus;
+
+        if (hasFocus)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+    }
 
     void Update()
     {
+        // If the app is not in focus, do not update.
+        if (Input.GetKey(KeyCode.Escape)) hasFocus = false;
+        if (!hasFocus) return;
+
+        // If the app is in focus, do update.
         float processedSpeed = speed;
 
         if (Input.GetKey(KeyCode.LeftShift))
@@ -30,7 +47,7 @@ public class CameraController : MonoBehaviour
         // Even though it is ALONG the Y axis.
         transform.eulerAngles = new Vector3(verticalRotation, transform.eulerAngles.y + horizontalRotation, 0.0f);
     }
-    
+
     Vector3 GetDirection()
     {
         Vector3 direction = Vector3.zero;
