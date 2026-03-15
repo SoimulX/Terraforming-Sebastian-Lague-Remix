@@ -1,5 +1,7 @@
 # Terraforming-Sebastian-Lague-Remix
 
+*This is an early project from 2023, preserved for historical context.*
+
 This project expects to be a implementation of the marching cubes algorithm for creating 3D digital terrains.
 The terrain is broken down into multiple chunks that can be generated infinitely along the ground plane and on the vertical axis.
 
